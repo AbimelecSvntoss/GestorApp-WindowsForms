@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Text;
+using System.Text.Json;
 using System.Windows.Forms;
 
 namespace GestorAppTestFinalV2Git
@@ -33,11 +35,9 @@ namespace GestorAppTestFinalV2Git
 
             DateTime fecha = dtpFechaCobro.Value.Date;
 
-            // Añadir suscripción básica; si en el futuro quieres añadir Premium, puedes usar otro formulario o campo adicional.
             var sus = new Suscripcion(txtNombre.Text.Trim(), costo, fecha);
             listaSuscripciones.Add(sus);
 
-            // Limpiar entradas
             txtNombre.Clear();
             txtCosto.Clear();
             dtpFechaCobro.Value = DateTime.Now;
@@ -48,9 +48,15 @@ namespace GestorAppTestFinalV2Git
 
         private void btnMostrar_Click(object sender, EventArgs e)
         {
+            MostrarEnOutput();
+        }
+
+        private void MostrarEnOutput()
+        {
             if (listaSuscripciones.Count == 0)
             {
                 MessageBox.Show("No hay suscripciones agregadas.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                txtOutput.Clear();
                 return;
             }
 
@@ -74,6 +80,78 @@ namespace GestorAppTestFinalV2Git
             sb.AppendLine($"Total de gastos mensuales: {total:C2}");
 
             txtOutput.Text = sb.ToString();
+        }
+
+        private void btnGuardar_Click(object sender, EventArgs e)
+        {
+            if (listaSuscripciones.Count == 0)
+            {
+                MessageBox.Show("No hay suscripciones para guardar.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            using var sfd = new SaveFileDialog
+            {
+                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                DefaultExt = "json",
+                FileName = "suscripciones.json"
+            };
+
+            if (sfd.ShowDialog(this) != DialogResult.OK) return;
+
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    PropertyNameCaseInsensitive = true
+                };
+
+                string json = JsonSerializer.Serialize(listaSuscripciones, options);
+                File.WriteAllText(sfd.FileName, json);
+                MessageBox.Show("Suscripciones guardadas correctamente.", "OK", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al guardar: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnCargar_Click(object sender, EventArgs e)
+        {
+            using var ofd = new OpenFileDialog
+            {
+                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                DefaultExt = "json"
+            };
+
+            if (ofd.ShowDialog(this) != DialogResult.OK) return;
+
+            try
+            {
+                string json = File.ReadAllText(ofd.FileName);
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var items = JsonSerializer.Deserialize<List<Suscripcion>>(json, options);
+                if (items == null)
+                {
+                    MessageBox.Show("El archivo no contiene suscripciones válidas.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                listaSuscripciones.Clear();
+                listaSuscripciones.AddRange(items);
+
+                MostrarEnOutput();
+                MessageBox.Show("Suscripciones cargadas correctamente.", "OK", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }

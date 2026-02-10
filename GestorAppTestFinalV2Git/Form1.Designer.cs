@@ -15,6 +15,8 @@ namespace GestorAppTestFinalV2Git
         private DateTimePicker dtpFechaCobro;
         private Button btnAgregar;
         private Button btnMostrar;
+        private Button btnGuardar;
+        private Button btnCargar;
         private TextBox txtOutput;
 
         protected override void Dispose(bool disposing)
@@ -28,137 +30,120 @@ namespace GestorAppTestFinalV2Git
 
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
-            lblNombre = new Label();
-            txtNombre = new TextBox();
-            lblCosto = new Label();
-            txtCosto = new TextBox();
-            lblFecha = new Label();
-            dtpFechaCobro = new DateTimePicker();
-            btnAgregar = new Button();
-            btnMostrar = new Button();
-            txtOutput = new TextBox();
-            SuspendLayout();
+            components = new System.ComponentModel.Container();
+            this.lblNombre = new Label();
+            this.txtNombre = new TextBox();
+            this.lblCosto = new Label();
+            this.txtCosto = new TextBox();
+            this.lblFecha = new Label();
+            this.dtpFechaCobro = new DateTimePicker();
+            this.btnAgregar = new Button();
+            this.btnMostrar = new Button();
+            this.btnGuardar = new Button();
+            this.btnCargar = new Button();
+            this.txtOutput = new TextBox();
+
+            // 
+            // Form
+            // 
+            this.Text = "Gestor de Suscripciones";
+            this.ClientSize = new System.Drawing.Size(720, 460);
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.AutoScaleMode = AutoScaleMode.Font;
+
             // 
             // lblNombre
             // 
-            lblNombre.AutoSize = true;
-            lblNombre.Font = new Font("Dubai", 8.999999F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblNombre.ForeColor = SystemColors.ControlText;
-            lblNombre.Location = new Point(17, 28);
-            lblNombre.Name = "lblNombre";
-            lblNombre.Size = new Size(68, 21);
-            lblNombre.TabIndex = 0;
-            lblNombre.Text = "Suscripción:";
+            this.lblNombre.Text = "Suscripción:";
+            this.lblNombre.Location = new System.Drawing.Point(20, 20);
+            this.lblNombre.AutoSize = true;
+
             // 
             // txtNombre
             // 
-            txtNombre.Location = new Point(111, 22);
-            txtNombre.Margin = new Padding(3, 4, 3, 4);
-            txtNombre.Name = "txtNombre";
-            txtNombre.Size = new Size(446, 28);
-            txtNombre.TabIndex = 1;
+            this.txtNombre.Location = new System.Drawing.Point(130, 16);
+            this.txtNombre.Width = 560;
+
             // 
             // lblCosto
             // 
-            lblCosto.AutoSize = true;
-            lblCosto.Font = new Font("Dubai", 9F);
-            lblCosto.ForeColor = SystemColors.ControlText;
-            lblCosto.Location = new Point(17, 84);
-            lblCosto.Name = "lblCosto";
-            lblCosto.Size = new Size(84, 21);
-            lblCosto.TabIndex = 2;
-            lblCosto.Text = "Costo mensual:";
+            this.lblCosto.Text = "Costo mensual:";
+            this.lblCosto.Location = new System.Drawing.Point(20, 60);
+            this.lblCosto.AutoSize = true;
+
             // 
             // txtCosto
             // 
-            txtCosto.Location = new Point(111, 78);
-            txtCosto.Margin = new Padding(3, 4, 3, 4);
-            txtCosto.Name = "txtCosto";
-            txtCosto.PlaceholderText = "Ej: 129.99";
-            txtCosto.Size = new Size(172, 28);
-            txtCosto.TabIndex = 3;
+            this.txtCosto.Location = new System.Drawing.Point(130, 56);
+            this.txtCosto.Width = 200;
+            this.txtCosto.PlaceholderText = "Ej: 129.99";
+
             // 
             // lblFecha
             // 
-            lblFecha.AutoSize = true;
-            lblFecha.Font = new Font("Dubai", 9F);
-            lblFecha.ForeColor = SystemColors.ControlText;
-            lblFecha.Location = new Point(17, 140);
-            lblFecha.Name = "lblFecha";
-            lblFecha.Size = new Size(86, 21);
-            lblFecha.TabIndex = 4;
-            lblFecha.Text = "Fecha de cobro:";
+            this.lblFecha.Text = "Fecha de cobro:";
+            this.lblFecha.Location = new System.Drawing.Point(20, 100);
+            this.lblFecha.AutoSize = true;
+
             // 
             // dtpFechaCobro
             // 
-            dtpFechaCobro.Format = DateTimePickerFormat.Short;
-            dtpFechaCobro.Location = new Point(111, 134);
-            dtpFechaCobro.Margin = new Padding(3, 4, 3, 4);
-            dtpFechaCobro.Name = "dtpFechaCobro";
-            dtpFechaCobro.Size = new Size(172, 28);
-            dtpFechaCobro.TabIndex = 5;
+            this.dtpFechaCobro.Location = new System.Drawing.Point(130, 96);
+            this.dtpFechaCobro.Format = DateTimePickerFormat.Short;
+
             // 
             // btnAgregar
             // 
-            btnAgregar.Font = new Font("Dubai", 9F);
-            btnAgregar.ForeColor = SystemColors.ControlText;
-            btnAgregar.Location = new Point(17, 196);
-            btnAgregar.Margin = new Padding(3, 4, 3, 4);
-            btnAgregar.Name = "btnAgregar";
-            btnAgregar.Size = new Size(189, 45);
-            btnAgregar.TabIndex = 6;
-            btnAgregar.Text = "Agregar suscripción";
-            btnAgregar.Click += btnAgregar_Click;
+            this.btnAgregar.Text = "Agregar suscripción";
+            this.btnAgregar.Location = new System.Drawing.Point(20, 140);
+            this.btnAgregar.Size = new System.Drawing.Size(200, 34);
+            this.btnAgregar.Click += new EventHandler(this.btnAgregar_Click);
+
             // 
             // btnMostrar
             // 
-            btnMostrar.Font = new Font("Dubai", 9F);
-            btnMostrar.ForeColor = SystemColors.ControlText;
-            btnMostrar.Location = new Point(223, 196);
-            btnMostrar.Margin = new Padding(3, 4, 3, 4);
-            btnMostrar.Name = "btnMostrar";
-            btnMostrar.Size = new Size(189, 45);
-            btnMostrar.TabIndex = 7;
-            btnMostrar.Text = "Mostrar detalles y total";
-            btnMostrar.Click += btnMostrar_Click;
+            this.btnMostrar.Text = "Mostrar detalles y total";
+            this.btnMostrar.Location = new System.Drawing.Point(240, 140);
+            this.btnMostrar.Size = new System.Drawing.Size(200, 34);
+            this.btnMostrar.Click += new EventHandler(this.btnMostrar_Click);
+
+            // 
+            // btnGuardar
+            // 
+            this.btnGuardar.Text = "Guardar (JSON)";
+            this.btnGuardar.Location = new System.Drawing.Point(460, 140);
+            this.btnGuardar.Size = new System.Drawing.Size(110, 34);
+            this.btnGuardar.Click += new EventHandler(this.btnGuardar_Click);
+
+            // 
+            // btnCargar
+            // 
+            this.btnCargar.Text = "Cargar (JSON)";
+            this.btnCargar.Location = new System.Drawing.Point(580, 140);
+            this.btnCargar.Size = new System.Drawing.Size(110, 34);
+            this.btnCargar.Click += new EventHandler(this.btnCargar_Click);
+
             // 
             // txtOutput
             // 
-            txtOutput.BackColor = SystemColors.Control;
-            txtOutput.Font = new Font("Dubai", 9F);
-            txtOutput.ForeColor = SystemColors.ControlText;
-            txtOutput.Location = new Point(17, 266);
-            txtOutput.Margin = new Padding(3, 4, 3, 4);
-            txtOutput.Multiline = true;
-            txtOutput.Name = "txtOutput";
-            txtOutput.ReadOnly = true;
-            txtOutput.ScrollBars = ScrollBars.Vertical;
-            txtOutput.Size = new Size(541, 292);
-            txtOutput.TabIndex = 8;
-            // 
-            // Form1
-            // 
-            AutoScaleDimensions = new SizeF(6F, 21F);
-            AutoScaleMode = AutoScaleMode.Font;
-            BackColor = SystemColors.Control;
-            ClientSize = new Size(600, 588);
-            Controls.Add(lblNombre);
-            Controls.Add(txtNombre);
-            Controls.Add(lblCosto);
-            Controls.Add(txtCosto);
-            Controls.Add(lblFecha);
-            Controls.Add(dtpFechaCobro);
-            Controls.Add(btnAgregar);
-            Controls.Add(btnMostrar);
-            Controls.Add(txtOutput);
-            Font = new Font("Dubai", 9F);
-            Icon = (Icon)resources.GetObject("$this.Icon");
-            Margin = new Padding(3, 4, 3, 4);
-            Name = "Form1";
-            Text = "Gestor de Gastos/Suscripciones 2026";
-            ResumeLayout(false);
-            PerformLayout();
+            this.txtOutput.Location = new System.Drawing.Point(20, 190);
+            this.txtOutput.Size = new System.Drawing.Size(680, 250);
+            this.txtOutput.Multiline = true;
+            this.txtOutput.ScrollBars = ScrollBars.Vertical;
+            this.txtOutput.ReadOnly = true;
+
+            // Add controls to form
+            this.Controls.Add(this.lblNombre);
+            this.Controls.Add(this.txtNombre);
+            this.Controls.Add(this.lblCosto);
+            this.Controls.Add(this.txtCosto);
+            this.Controls.Add(this.lblFecha);
+            this.Controls.Add(this.dtpFechaCobro);
+            this.Controls.Add(this.btnAgregar);
+            this.Controls.Add(this.btnMostrar);
+            this.Controls.Add(this.btnGuardar);
+            this.Controls.Add(this.btnCargar);
+            this.Controls.Add(this.txtOutput);
         }
     }
 }
