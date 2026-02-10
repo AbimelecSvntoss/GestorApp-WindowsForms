@@ -5,16 +5,26 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Windows.Forms;
+using System.Drawing;
 
 namespace GestorAppTestFinalV2Git
 {
     public partial class Form1 : Form
     {
         private readonly List<Suscripcion> listaSuscripciones = new();
+        // Controla suscripciones ya notificadas para evitar repetir notificaciones en la misma ejecución
+        private readonly HashSet<string> notifiedKeys = new();
 
         public Form1()
         {
             InitializeComponent();
+
+            // Inicializar NotifyIcon y Timer
+            notifyIcon.Icon = SystemIcons.Application;
+            notifyIcon.Visible = false; // sólo visible cuando estén activos los recordatorios
+
+            // Aseguramos el intervalo por defecto (1 minuto)
+            timerRecordatorio.Interval = 60_000;
         }
 
         private void btnAgregar_Click(object sender, EventArgs e)
@@ -38,10 +48,14 @@ namespace GestorAppTestFinalV2Git
             var sus = new Suscripcion(txtNombre.Text.Trim(), costo, fecha);
             listaSuscripciones.Add(sus);
 
+            // Limpiar entradas
             txtNombre.Clear();
             txtCosto.Clear();
             dtpFechaCobro.Value = DateTime.Now;
             txtNombre.Focus();
+
+            // Limpiamos el registro de notificaciones para permitir notificar la nueva entrada si aplica
+            notifiedKeys.Clear();
 
             MessageBox.Show("Suscripción agregada correctamente.", "OK", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -145,6 +159,9 @@ namespace GestorAppTestFinalV2Git
                 listaSuscripciones.Clear();
                 listaSuscripciones.AddRange(items);
 
+                // Limpiamos notificaciones previas para permitir notificar después de cargar
+                notifiedKeys.Clear();
+
                 MostrarEnOutput();
                 MessageBox.Show("Suscripciones cargadas correctamente.", "OK", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -152,6 +169,84 @@ namespace GestorAppTestFinalV2Git
             {
                 MessageBox.Show($"Error al cargar: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        // Evento del checkbox para activar/desactivar recordatorios
+        private void chkActivarRecordatorios_CheckedChanged(object sender, EventArgs e)
+        {
+            bool activar = chkActivarRecordatorios.Checked;
+            notifyIcon.Visible = activar;
+            if (activar)
+            {
+                timerRecordatorio.Start();
+                ShowStatusInOutput("Recordatorios activados.");
+            }
+            else
+            {
+                timerRecordatorio.Stop();
+                ShowStatusInOutput("Recordatorios desactivados.");
+            }
+        }
+
+        // Lógica ejecutada periódicamente por el Timer
+        private void timerRecordatorio_Tick(object sender, EventArgs e)
+        {
+            if (listaSuscripciones.Count == 0) return;
+
+            int diasAntes = (int)nudDiasAntes.Value;
+            DateTime hoy = DateTime.Today;
+
+            foreach (var item in listaSuscripciones)
+            {
+                var diasHasta = (item.FechaCobro.Date - hoy).Days;
+                if (diasHasta <= diasAntes && diasHasta >= 0)
+                {
+                    string key = $"{item.Nombre}|{item.FechaCobro:yyyyMMdd}";
+                    if (!notifiedKeys.Contains(key))
+                    {
+                        string mensaje = $"{item.Nombre} se renueva en {diasHasta} día(s) - {item.FechaCobro:d} - ${item.PrecioMensual:F2}";
+                        // Mostrar balloon tip
+                        try
+                        {
+                            notifyIcon.BalloonTipTitle = "Recordatorio de suscripción";
+                            notifyIcon.BalloonTipText = mensaje;
+                            notifyIcon.ShowBalloonTip(5000);
+                        }
+                        catch
+                        {
+                            // si falla la balloon tip, seguimos sin interrumpir la app
+                        }
+
+                        // También añadir al output para historial
+                        ShowStatusInOutput($"[Recordatorio] {mensaje}");
+
+                        // Marcar como notificado para no repetir en esta sesión
+                        notifiedKeys.Add(key);
+                    }
+                }
+            }
+        }
+
+        private void ShowStatusInOutput(string texto)
+        {
+            txtOutput.Text = $"{DateTime.Now:G} - {texto}{Environment.NewLine}{txtOutput.Text}";
+        }
+
+        // Liberar icono cuando se cierre el formulario
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            try
+            {
+                notifyIcon.Visible = false;
+                notifyIcon.Dispose();
+            }
+            catch { }
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
