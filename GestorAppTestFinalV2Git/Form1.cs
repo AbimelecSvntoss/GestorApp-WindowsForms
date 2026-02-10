@@ -12,6 +12,7 @@ namespace GestorAppTestFinalV2Git
     public partial class Form1 : Form
     {
         private readonly List<Suscripcion> listaSuscripciones = new();
+        private readonly HashSet<string> categorias = new(StringComparer.OrdinalIgnoreCase);
         // Controla suscripciones ya notificadas para evitar repetir notificaciones en la misma ejecución
         private readonly HashSet<string> notifiedKeys = new();
 
@@ -19,12 +20,48 @@ namespace GestorAppTestFinalV2Git
         {
             InitializeComponent();
 
-            // Inicializar NotifyIcon y Timer
-            notifyIcon.Icon = SystemIcons.Application;
-            notifyIcon.Visible = false; // sólo visible cuando estén activos los recordatorios
+            // Inicializar NotifyIcon y Timer (si existen)
+            try
+            {
+                notifyIcon.Icon = SystemIcons.Application;
+                notifyIcon.Visible = false;
+                timerRecordatorio.Interval = 60_000;
+            }
+            catch { }
+        }
 
-            // Aseguramos el intervalo por defecto (1 minuto)
-            timerRecordatorio.Interval = 60_000;
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            // Categorías por defecto
+            AddCategory("Todas"); // siempre primero como opción de filtro
+            AddCategory("General");
+            AddCategory("Streaming");
+            AddCategory("Música");
+            AddCategory("Utilidades");
+            AddCategory("Software");
+
+            // Seleccionar "Todas" en el filtro por defecto
+            cmbFiltroCategoria.SelectedIndex = 0;
+        }
+
+        private void AddCategory(string categoria)
+        {
+            if (string.IsNullOrWhiteSpace(categoria)) return;
+            if (categorias.Contains(categoria.Trim())) return;
+
+            categorias.Add(categoria.Trim());
+
+            // Añadir a combobox de categoría (para selección/entrada) y filtro
+            cmbCategoria.Items.Add(categoria.Trim());
+
+            // filtro: mantener "Todas" en la posición 0
+            if (!cmbFiltroCategoria.Items.Contains(categoria.Trim()))
+            {
+                if (string.Equals(categoria.Trim(), "Todas", StringComparison.OrdinalIgnoreCase))
+                    cmbFiltroCategoria.Items.Insert(0, "Todas");
+                else
+                    cmbFiltroCategoria.Items.Add(categoria.Trim());
+            }
         }
 
         private void btnAgregar_Click(object sender, EventArgs e)
@@ -45,13 +82,18 @@ namespace GestorAppTestFinalV2Git
 
             DateTime fecha = dtpFechaCobro.Value.Date;
 
-            var sus = new Suscripcion(txtNombre.Text.Trim(), costo, fecha);
+            string categoria = string.IsNullOrWhiteSpace(cmbCategoria.Text) ? "General" : cmbCategoria.Text.Trim();
+            // si es nueva, añadirla a listas y comboboxes
+            AddCategory(categoria);
+
+            var sus = new Suscripcion(txtNombre.Text.Trim(), costo, fecha, categoria);
             listaSuscripciones.Add(sus);
 
             // Limpiar entradas
             txtNombre.Clear();
             txtCosto.Clear();
             dtpFechaCobro.Value = DateTime.Now;
+            cmbCategoria.Text = string.Empty;
             txtNombre.Focus();
 
             // Limpiamos el registro de notificaciones para permitir notificar la nueva entrada si aplica
@@ -67,6 +109,11 @@ namespace GestorAppTestFinalV2Git
 
         private void MostrarEnOutput()
         {
+            MostrarEnOutput(cmbFiltroCategoria.SelectedItem?.ToString());
+        }
+
+        private void MostrarEnOutput(string filtroCategoria)
+        {
             if (listaSuscripciones.Count == 0)
             {
                 MessageBox.Show("No hay suscripciones agregadas.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -77,7 +124,14 @@ namespace GestorAppTestFinalV2Git
             var sb = new StringBuilder();
             double total = 0;
 
-            foreach (var item in listaSuscripciones)
+            IEnumerable<Suscripcion> items = listaSuscripciones;
+
+            if (!string.IsNullOrWhiteSpace(filtroCategoria) && !string.Equals(filtroCategoria, "Todas", StringComparison.OrdinalIgnoreCase))
+            {
+                items = items.Where(s => string.Equals(s.Categoria, filtroCategoria, StringComparison.OrdinalIgnoreCase));
+            }
+
+            foreach (var item in items)
             {
                 sb.AppendLine(item.MostrarDetalles());
                 total += item.PrecioMensual;
@@ -94,6 +148,12 @@ namespace GestorAppTestFinalV2Git
             sb.AppendLine($"Total de gastos mensuales: {total:C2}");
 
             txtOutput.Text = sb.ToString();
+        }
+
+        private void cmbFiltroCategoria_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // Actualizar vista al cambiar filtro
+            MostrarEnOutput();
         }
 
         private void btnGuardar_Click(object sender, EventArgs e)
@@ -159,6 +219,16 @@ namespace GestorAppTestFinalV2Git
                 listaSuscripciones.Clear();
                 listaSuscripciones.AddRange(items);
 
+                // Reconstruir categorías desde las suscripciones cargadas
+                categorias.Clear();
+                cmbCategoria.Items.Clear();
+                cmbFiltroCategoria.Items.Clear();
+                AddCategory("Todas");
+                foreach (var s in listaSuscripciones)
+                {
+                    AddCategory(string.IsNullOrWhiteSpace(s.Categoria) ? "General" : s.Categoria);
+                }
+
                 // Limpiamos notificaciones previas para permitir notificar después de cargar
                 notifiedKeys.Clear();
 
@@ -205,22 +275,15 @@ namespace GestorAppTestFinalV2Git
                     if (!notifiedKeys.Contains(key))
                     {
                         string mensaje = $"{item.Nombre} se renueva en {diasHasta} día(s) - {item.FechaCobro:d} - ${item.PrecioMensual:F2}";
-                        // Mostrar balloon tip
                         try
                         {
                             notifyIcon.BalloonTipTitle = "Recordatorio de suscripción";
                             notifyIcon.BalloonTipText = mensaje;
                             notifyIcon.ShowBalloonTip(5000);
                         }
-                        catch
-                        {
-                            // si falla la balloon tip, seguimos sin interrumpir la app
-                        }
+                        catch { }
 
-                        // También añadir al output para historial
                         ShowStatusInOutput($"[Recordatorio] {mensaje}");
-
-                        // Marcar como notificado para no repetir en esta sesión
                         notifiedKeys.Add(key);
                     }
                 }
@@ -232,7 +295,6 @@ namespace GestorAppTestFinalV2Git
             txtOutput.Text = $"{DateTime.Now:G} - {texto}{Environment.NewLine}{txtOutput.Text}";
         }
 
-        // Liberar icono cuando se cierre el formulario
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
@@ -242,11 +304,6 @@ namespace GestorAppTestFinalV2Git
                 notifyIcon.Dispose();
             }
             catch { }
-        }
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
-
         }
     }
 }
